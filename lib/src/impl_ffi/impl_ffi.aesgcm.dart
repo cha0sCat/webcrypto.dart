@@ -16,16 +16,17 @@
 
 part of 'impl_ffi.dart';
 
-Future<AesGcmSecretKeyImpl> aesGcm_importRawKey(List<int> keyData) async =>
-    _AesGcmSecretKeyImpl(_aesImportRawKey(keyData));
+Future<AesGcmSecretKeyImpl> aesGcm_importRawKey(List<int> keyData) =>
+    _syncResult(_AesGcmSecretKeyImpl(_aesImportRawKey(keyData)));
 
 Future<AesGcmSecretKeyImpl> aesGcm_importJsonWebKey(
   Map<String, dynamic> jwk,
-) async =>
-    _AesGcmSecretKeyImpl(_aesImportJwkKey(jwk, expectedJwkAlgSuffix: 'GCM'));
+) => _syncResult(
+  _AesGcmSecretKeyImpl(_aesImportJwkKey(jwk, expectedJwkAlgSuffix: 'GCM')),
+);
 
-Future<AesGcmSecretKeyImpl> aesGcm_generateKey(int length) async =>
-    _AesGcmSecretKeyImpl(_aesGenerateKey(length));
+Future<AesGcmSecretKeyImpl> aesGcm_generateKey(int length) =>
+    _syncResult(_AesGcmSecretKeyImpl(_aesGenerateKey(length)));
 
 Future<Uint8List> _aesGcmEncryptDecrypt(
   List<int> key,
@@ -34,7 +35,7 @@ Future<Uint8List> _aesGcmEncryptDecrypt(
   List<int>? additionalData,
   int tagLength,
   bool isEncrypt,
-) async {
+) {
   final additionalData_ = additionalData ??= <int>[];
   if (isEncrypt && data.length > (1 << 39) - 256) {
     // More than this is not allowed by Web crypto spec, we shall honor that.
@@ -55,7 +56,7 @@ Future<Uint8List> _aesGcmEncryptDecrypt(
   //       what chrome does, how firefox passes tests. And check if other
   //       primitives that accept an iv/nonce has size limitations on it.
 
-  return _Scope.async((scope) async {
+  return _syncResult(_Scope.sync((scope) {
     assert(key.length == 16 || key.length == 32);
     final aead = key.length == 16
         ? ssl.EVP_aead_aes_128_gcm()
@@ -109,26 +110,23 @@ Future<Uint8List> _aesGcmEncryptDecrypt(
       );
       return out.copy(outLen.value);
     }
-  });
+  }));
 }
 
 final class _StaticAesGcmSecretKeyImpl implements StaticAesGcmSecretKeyImpl {
   const _StaticAesGcmSecretKeyImpl();
 
   @override
-  Future<AesGcmSecretKeyImpl> importRawKey(List<int> keyData) async {
-    return await aesGcm_importRawKey(keyData);
-  }
+  Future<AesGcmSecretKeyImpl> importRawKey(List<int> keyData) =>
+      aesGcm_importRawKey(keyData);
 
   @override
-  Future<AesGcmSecretKeyImpl> importJsonWebKey(Map<String, dynamic> jwk) async {
-    return await aesGcm_importJsonWebKey(jwk);
-  }
+  Future<AesGcmSecretKeyImpl> importJsonWebKey(Map<String, dynamic> jwk) =>
+      aesGcm_importJsonWebKey(jwk);
 
   @override
-  Future<AesGcmSecretKeyImpl> generateKey(int length) async {
-    return await aesGcm_generateKey(length);
-  }
+  Future<AesGcmSecretKeyImpl> generateKey(int length) =>
+      aesGcm_generateKey(length);
 }
 
 final class _AesGcmSecretKeyImpl implements AesGcmSecretKeyImpl {
@@ -146,7 +144,7 @@ final class _AesGcmSecretKeyImpl implements AesGcmSecretKeyImpl {
     List<int> iv, {
     List<int>? additionalData,
     int? tagLength = 128,
-  }) async => _aesGcmEncryptDecrypt(
+  }) => _aesGcmEncryptDecrypt(
     _key,
     data,
     iv,
@@ -161,7 +159,7 @@ final class _AesGcmSecretKeyImpl implements AesGcmSecretKeyImpl {
     List<int> iv, {
     List<int>? additionalData,
     int? tagLength = 128,
-  }) async => _aesGcmEncryptDecrypt(
+  }) => _aesGcmEncryptDecrypt(
     _key,
     data,
     iv,
@@ -171,9 +169,9 @@ final class _AesGcmSecretKeyImpl implements AesGcmSecretKeyImpl {
   );
 
   @override
-  Future<Map<String, dynamic>> exportJsonWebKey() async =>
-      _aesExportJwkKey(_key, jwkAlgSuffix: 'GCM');
+  Future<Map<String, dynamic>> exportJsonWebKey() =>
+      _syncResult(_aesExportJwkKey(_key, jwkAlgSuffix: 'GCM'));
 
   @override
-  Future<Uint8List> exportRawKey() async => Uint8List.fromList(_key);
+  Future<Uint8List> exportRawKey() => _syncResult(Uint8List.fromList(_key));
 }

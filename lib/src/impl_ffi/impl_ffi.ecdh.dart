@@ -19,12 +19,12 @@ part of 'impl_ffi.dart';
 Future<EcdhPrivateKeyImpl> ecdhPrivateKey_importPkcs8Key(
   List<int> keyData,
   EllipticCurve curve,
-) async => _EcdhPrivateKeyImpl(_importPkcs8EcPrivateKey(keyData, curve));
+) => _syncResult(_EcdhPrivateKeyImpl(_importPkcs8EcPrivateKey(keyData, curve)));
 
 Future<EcdhPrivateKeyImpl> ecdhPrivateKey_importJsonWebKey(
   Map<String, dynamic> jwk,
   EllipticCurve curve,
-) async => _EcdhPrivateKeyImpl(
+) => _syncResult(_EcdhPrivateKeyImpl(
   _importJwkEcPrivateOrPublicKey(
     JsonWebKey.fromJson(jwk),
     curve,
@@ -32,31 +32,31 @@ Future<EcdhPrivateKeyImpl> ecdhPrivateKey_importJsonWebKey(
     expectedUse: 'enc',
     expectedAlg: null, // ECDH has no validation of 'jwk.alg'
   ),
-);
+));
 
 Future<KeyPair<EcdhPrivateKeyImpl, EcdhPublicKeyImpl>>
-ecdhPrivateKey_generateKey(EllipticCurve curve) async {
+ecdhPrivateKey_generateKey(EllipticCurve curve) {
   final p = _generateEcKeyPair(curve);
-  return (
+  return _syncResult((
     privateKey: _EcdhPrivateKeyImpl(p.privateKey),
     publicKey: _EcdhPublicKeyImpl(p.publicKey),
-  );
+  ));
 }
 
 Future<EcdhPublicKeyImpl> ecdhPublicKey_importRawKey(
   List<int> keyData,
   EllipticCurve curve,
-) async => _EcdhPublicKeyImpl(_importRawEcPublicKey(keyData, curve));
+) => _syncResult(_EcdhPublicKeyImpl(_importRawEcPublicKey(keyData, curve)));
 
 Future<EcdhPublicKeyImpl> ecdhPublicKey_importSpkiKey(
   List<int> keyData,
   EllipticCurve curve,
-) async => _EcdhPublicKeyImpl(_importSpkiEcPublicKey(keyData, curve));
+) => _syncResult(_EcdhPublicKeyImpl(_importSpkiEcPublicKey(keyData, curve)));
 
 Future<EcdhPublicKeyImpl> ecdhPublicKey_importJsonWebKey(
   Map<String, dynamic> jwk,
   EllipticCurve curve,
-) async => _EcdhPublicKeyImpl(
+) => _syncResult(_EcdhPublicKeyImpl(
   _importJwkEcPrivateOrPublicKey(
     JsonWebKey.fromJson(jwk),
     curve,
@@ -64,7 +64,7 @@ Future<EcdhPublicKeyImpl> ecdhPublicKey_importJsonWebKey(
     expectedUse: 'enc',
     expectedAlg: null, // ECDH has no validation of 'jwk.alg'
   ),
-);
+));
 
 final class _StaticEcdhPrivateKeyImpl implements StaticEcdhPrivateKeyImpl {
   const _StaticEcdhPrivateKeyImpl();
@@ -84,12 +84,9 @@ final class _StaticEcdhPrivateKeyImpl implements StaticEcdhPrivateKeyImpl {
   @override
   Future<(EcdhPrivateKeyImpl, EcdhPublicKeyImpl)> generateKey(
     EllipticCurve curve,
-  ) async {
-    final KeyPair<EcdhPrivateKeyImpl, EcdhPublicKeyImpl> keyPair =
-        await ecdhPrivateKey_generateKey(curve);
-
-    return (keyPair.privateKey, keyPair.publicKey);
-  }
+  ) => ecdhPrivateKey_generateKey(
+    curve,
+  ).then((keyPair) => (keyPair.privateKey, keyPair.publicKey));
 }
 
 final class _EcdhPrivateKeyImpl implements EcdhPrivateKeyImpl {
@@ -103,7 +100,7 @@ final class _EcdhPrivateKeyImpl implements EcdhPrivateKeyImpl {
   }
 
   @override
-  Future<Uint8List> deriveBits(int length, EcdhPublicKeyImpl publicKey) async {
+  Future<Uint8List> deriveBits(int length, EcdhPublicKeyImpl publicKey) {
     if (publicKey is! _EcdhPublicKeyImpl) {
       throw ArgumentError.value(
         publicKey,
@@ -115,7 +112,7 @@ final class _EcdhPrivateKeyImpl implements EcdhPrivateKeyImpl {
       throw ArgumentError.value(length, 'length', 'must be positive');
     }
 
-    return _Scope.async((scope) async {
+    return _syncResult(_Scope.sync((scope) {
       final pubEcKey = ssl.EVP_PKEY_get1_EC_KEY.invoke(publicKey._key);
       _checkOp(pubEcKey.address != 0, fallback: 'not an ec key');
       scope.defer(() => ssl.EC_KEY_free(pubEcKey));
@@ -177,19 +174,21 @@ final class _EcdhPrivateKeyImpl implements EcdhPrivateKeyImpl {
       }
 
       return derived;
-    });
+    }));
   }
 
   @override
-  Future<Map<String, dynamic>> exportJsonWebKey() async =>
+  Future<Map<String, dynamic>> exportJsonWebKey() =>
+      _syncResult(
       // Neither Chrome or Firefox produces 'use': 'enc' for ECDH, we choose to
       // omit it for better interoperability. Chrome incorrectly forbids during
       // import (though we strip 'use' to mitigate this).
       // See also: https://crbug.com/641499 (and importJsonWebKey in JS)
-      _exportJwkEcPrivateOrPublicKey(_key, isPrivateKey: true, jwkUse: null);
+      _exportJwkEcPrivateOrPublicKey(_key, isPrivateKey: true, jwkUse: null),
+    );
 
   @override
-  Future<Uint8List> exportPkcs8Key() async => _exportPkcs8Key(_key);
+  Future<Uint8List> exportPkcs8Key() => _syncResult(_exportPkcs8Key(_key));
 }
 
 final class _StaticEcdhPublicKeyImpl implements StaticEcdhPublicKeyImpl {
@@ -225,16 +224,18 @@ final class _EcdhPublicKeyImpl implements EcdhPublicKeyImpl {
   }
 
   @override
-  Future<Map<String, dynamic>> exportJsonWebKey() async =>
+  Future<Map<String, dynamic>> exportJsonWebKey() =>
+      _syncResult(
       // Neither Chrome or Firefox produces 'use': 'enc' for ECDH, we choose to
       // omit it for better interoperability. Chrome incorrectly forbids during
       // import (though we strip 'use' to mitigate this).
       // See also: https://crbug.com/641499 (and importJsonWebKey in JS)
-      _exportJwkEcPrivateOrPublicKey(_key, isPrivateKey: false, jwkUse: null);
+      _exportJwkEcPrivateOrPublicKey(_key, isPrivateKey: false, jwkUse: null),
+    );
 
   @override
-  Future<Uint8List> exportRawKey() async => _exportRawEcPublicKey(_key);
+  Future<Uint8List> exportRawKey() => _syncResult(_exportRawEcPublicKey(_key));
 
   @override
-  Future<Uint8List> exportSpkiKey() async => _exportSpkiKey(_key);
+  Future<Uint8List> exportSpkiKey() => _syncResult(_exportSpkiKey(_key));
 }

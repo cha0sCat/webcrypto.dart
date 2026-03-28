@@ -16,6 +16,8 @@
 
 part of 'impl_ffi.dart';
 
+Future<T> _syncResult<T>(T value) => Future<T>.value(value);
+
 /// Wrapper around [EVP_PKEY] which attaches finalizer and ensure that the
 /// [ffi.Finalizable] is kept in scope while the [EVP_PKEY] is used.
 class _EvpPKey implements ffi.Finalizable {

@@ -16,16 +16,15 @@
 
 part of 'impl_ffi.dart';
 
-Future<HkdfSecretKeyImpl> hkdfSecretKey_importRawKey(List<int> keyData) async =>
-    _HkdfSecretKeyImpl(Uint8List.fromList(keyData));
+Future<HkdfSecretKeyImpl> hkdfSecretKey_importRawKey(List<int> keyData) =>
+    _syncResult(_HkdfSecretKeyImpl(Uint8List.fromList(keyData)));
 
 final class _StaticHkdfSecretKeyImpl implements StaticHkdfSecretKeyImpl {
   const _StaticHkdfSecretKeyImpl();
 
   @override
-  Future<HkdfSecretKeyImpl> importRawKey(List<int> keyData) async {
-    return hkdfSecretKey_importRawKey(keyData);
-  }
+  Future<HkdfSecretKeyImpl> importRawKey(List<int> keyData) =>
+      hkdfSecretKey_importRawKey(keyData);
 }
 
 final class _HkdfSecretKeyImpl implements HkdfSecretKeyImpl {
@@ -44,7 +43,7 @@ final class _HkdfSecretKeyImpl implements HkdfSecretKeyImpl {
     HashImpl hash,
     List<int> salt,
     List<int> info,
-  ) async {
+  ) {
     if (length < 0) {
       throw ArgumentError.value(length, 'length', 'must be positive integer');
     }
@@ -58,7 +57,7 @@ final class _HkdfSecretKeyImpl implements HkdfSecretKeyImpl {
 
     final lengthInBytes = length ~/ 8;
 
-    return _Scope.async((scope) async {
+    return _syncResult(_Scope.sync((scope) {
       final out = scope<ffi.Uint8>(lengthInBytes);
       final r = ssl.HKDF(
         out,
@@ -83,6 +82,6 @@ final class _HkdfSecretKeyImpl implements HkdfSecretKeyImpl {
         _checkOpIsOne(r, fallback: 'HKDF key derivation failed');
       }
       return out.copy(lengthInBytes);
-    });
+    }));
   }
 }

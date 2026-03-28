@@ -18,17 +18,14 @@ part of 'impl_ffi.dart';
 
 Future<Pbkdf2SecretKeyImpl> pbkdf2SecretKey_importRawKey(
   List<int> keyData,
-) async {
-  return _Pbkdf2SecretKeyImpl(Uint8List.fromList(keyData));
-}
+) => _syncResult(_Pbkdf2SecretKeyImpl(Uint8List.fromList(keyData)));
 
 final class _StaticPbkdf2SecretKeyImpl implements StaticPbkdf2SecretKeyImpl {
   const _StaticPbkdf2SecretKeyImpl();
 
   @override
-  Future<Pbkdf2SecretKeyImpl> importRawKey(List<int> keyData) {
-    return pbkdf2SecretKey_importRawKey(keyData);
-  }
+  Future<Pbkdf2SecretKeyImpl> importRawKey(List<int> keyData) =>
+      pbkdf2SecretKey_importRawKey(keyData);
 }
 
 final class _Pbkdf2SecretKeyImpl implements Pbkdf2SecretKeyImpl {
@@ -47,7 +44,7 @@ final class _Pbkdf2SecretKeyImpl implements Pbkdf2SecretKeyImpl {
     HashImpl hash,
     List<int> salt,
     int iterations,
-  ) async {
+  ) {
     if (length < 0) {
       throw ArgumentError.value(length, 'length', 'must be positive integer');
     }
@@ -73,7 +70,7 @@ final class _Pbkdf2SecretKeyImpl implements Pbkdf2SecretKeyImpl {
 
     final lengthInBytes = length ~/ 8;
 
-    return _Scope.sync((scope) {
+    return _syncResult(_Scope.sync((scope) {
       final out = scope<ffi.Uint8>(lengthInBytes);
       _checkOpIsOne(
         ssl.PKCS5_PBKDF2_HMAC(
@@ -88,6 +85,6 @@ final class _Pbkdf2SecretKeyImpl implements Pbkdf2SecretKeyImpl {
         ),
       );
       return out.copy(lengthInBytes);
-    });
+    }));
   }
 }

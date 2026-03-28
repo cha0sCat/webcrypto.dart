@@ -16,16 +16,17 @@
 
 part of 'impl_ffi.dart';
 
-Future<AesCbcSecretKeyImpl> aesCbc_importRawKey(List<int> keyData) async =>
-    _AesCbcSecretKeyImpl(_aesImportRawKey(keyData));
+Future<AesCbcSecretKeyImpl> aesCbc_importRawKey(List<int> keyData) =>
+    _syncResult(_AesCbcSecretKeyImpl(_aesImportRawKey(keyData)));
 
 Future<AesCbcSecretKeyImpl> aesCbc_importJsonWebKey(
   Map<String, dynamic> jwk,
-) async =>
-    _AesCbcSecretKeyImpl(_aesImportJwkKey(jwk, expectedJwkAlgSuffix: 'CBC'));
+) => _syncResult(
+  _AesCbcSecretKeyImpl(_aesImportJwkKey(jwk, expectedJwkAlgSuffix: 'CBC')),
+);
 
-Future<AesCbcSecretKeyImpl> aesCbc_generateKey(int length) async =>
-    _AesCbcSecretKeyImpl(_aesGenerateKey(length));
+Future<AesCbcSecretKeyImpl> aesCbc_generateKey(int length) =>
+    _syncResult(_AesCbcSecretKeyImpl(_aesGenerateKey(length)));
 
 Stream<Uint8List> _aesCbcEncryptOrDecrypt(
   Uint8List key,
@@ -97,21 +98,16 @@ final class _StaticAesCbcSecretKeyImpl implements StaticAesCbcSecretKeyImpl {
   const _StaticAesCbcSecretKeyImpl();
 
   @override
-  Future<AesCbcSecretKeyImpl> importRawKey(List<int> keyData) async {
-    // TODO: Move implementation into this method in a follow up PR
-    // TODO: Move implementation into this method in a follow up PR
-    return await aesCbc_importRawKey(keyData);
-  }
+  Future<AesCbcSecretKeyImpl> importRawKey(List<int> keyData) =>
+      aesCbc_importRawKey(keyData);
 
   @override
-  Future<AesCbcSecretKeyImpl> importJsonWebKey(Map<String, dynamic> jwk) async {
-    return await aesCbc_importJsonWebKey(jwk);
-  }
+  Future<AesCbcSecretKeyImpl> importJsonWebKey(Map<String, dynamic> jwk) =>
+      aesCbc_importJsonWebKey(jwk);
 
   @override
-  Future<AesCbcSecretKeyImpl> generateKey(int length) async {
-    return await aesCbc_generateKey(length);
-  }
+  Future<AesCbcSecretKeyImpl> generateKey(int length) =>
+      aesCbc_generateKey(length);
 }
 
 final class _AesCbcSecretKeyImpl implements AesCbcSecretKeyImpl {
@@ -124,25 +120,25 @@ final class _AesCbcSecretKeyImpl implements AesCbcSecretKeyImpl {
   }
 
   @override
-  Future<Uint8List> decryptBytes(List<int> data, List<int> iv) async =>
-      await _bufferStream(decryptStream(Stream.value(data), iv));
+  Future<Uint8List> decryptBytes(List<int> data, List<int> iv) =>
+      _bufferStream(decryptStream(Stream.value(data), iv));
 
   @override
   Stream<Uint8List> decryptStream(Stream<List<int>> data, List<int> iv) =>
       _aesCbcEncryptOrDecrypt(_key, false, data, iv);
 
   @override
-  Future<Uint8List> encryptBytes(List<int> data, List<int> iv) async =>
-      await _bufferStream(encryptStream(Stream.value(data), iv));
+  Future<Uint8List> encryptBytes(List<int> data, List<int> iv) =>
+      _bufferStream(encryptStream(Stream.value(data), iv));
 
   @override
   Stream<Uint8List> encryptStream(Stream<List<int>> data, List<int> iv) =>
       _aesCbcEncryptOrDecrypt(_key, true, data, iv);
 
   @override
-  Future<Map<String, dynamic>> exportJsonWebKey() async =>
-      _aesExportJwkKey(_key, jwkAlgSuffix: 'CBC');
+  Future<Map<String, dynamic>> exportJsonWebKey() =>
+      _syncResult(_aesExportJwkKey(_key, jwkAlgSuffix: 'CBC'));
 
   @override
-  Future<Uint8List> exportRawKey() async => Uint8List.fromList(_key);
+  Future<Uint8List> exportRawKey() => _syncResult(Uint8List.fromList(_key));
 }

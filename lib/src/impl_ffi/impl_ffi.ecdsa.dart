@@ -35,12 +35,12 @@ String _ecdsaCurveToJwkAlg(EllipticCurve curve) {
 Future<EcdsaPrivateKeyImpl> ecdsaPrivateKey_importPkcs8Key(
   List<int> keyData,
   EllipticCurve curve,
-) async => _EcdsaPrivateKeyImpl(_importPkcs8EcPrivateKey(keyData, curve));
+) => _syncResult(_EcdsaPrivateKeyImpl(_importPkcs8EcPrivateKey(keyData, curve)));
 
 Future<EcdsaPrivateKeyImpl> ecdsaPrivateKey_importJsonWebKey(
   Map<String, dynamic> jwk,
   EllipticCurve curve,
-) async => _EcdsaPrivateKeyImpl(
+) => _syncResult(_EcdsaPrivateKeyImpl(
   _importJwkEcPrivateOrPublicKey(
     JsonWebKey.fromJson(jwk),
     curve,
@@ -48,31 +48,31 @@ Future<EcdsaPrivateKeyImpl> ecdsaPrivateKey_importJsonWebKey(
     expectedUse: 'sig',
     expectedAlg: _ecdsaCurveToJwkAlg(curve),
   ),
-);
+));
 
 Future<KeyPair<EcdsaPrivateKeyImpl, EcdsaPublicKeyImpl>>
-ecdsaPrivateKey_generateKey(EllipticCurve curve) async {
+ecdsaPrivateKey_generateKey(EllipticCurve curve) {
   final p = _generateEcKeyPair(curve);
-  return (
+  return _syncResult((
     privateKey: _EcdsaPrivateKeyImpl(p.privateKey),
     publicKey: _EcdsaPublicKeyImpl(p.publicKey),
-  );
+  ));
 }
 
 Future<EcdsaPublicKeyImpl> ecdsaPublicKey_importRawKey(
   List<int> keyData,
   EllipticCurve curve,
-) async => _EcdsaPublicKeyImpl(_importRawEcPublicKey(keyData, curve));
+) => _syncResult(_EcdsaPublicKeyImpl(_importRawEcPublicKey(keyData, curve)));
 
 Future<EcdsaPublicKeyImpl> ecdsaPublicKey_importSpkiKey(
   List<int> keyData,
   EllipticCurve curve,
-) async => _EcdsaPublicKeyImpl(_importSpkiEcPublicKey(keyData, curve));
+) => _syncResult(_EcdsaPublicKeyImpl(_importSpkiEcPublicKey(keyData, curve)));
 
 Future<EcdsaPublicKeyImpl> ecdsaPublicKey_importJsonWebKey(
   Map<String, dynamic> jwk,
   EllipticCurve curve,
-) async => _EcdsaPublicKeyImpl(
+) => _syncResult(_EcdsaPublicKeyImpl(
   _importJwkEcPrivateOrPublicKey(
     JsonWebKey.fromJson(jwk),
     curve,
@@ -80,7 +80,7 @@ Future<EcdsaPublicKeyImpl> ecdsaPublicKey_importJsonWebKey(
     expectedUse: 'sig',
     expectedAlg: _ecdsaCurveToJwkAlg(curve),
   ),
-);
+));
 
 /// Convert ECDSA signature in DER format returned by BoringSSL to the raw R + S
 /// formated specified in the webcrypto specification.
@@ -198,12 +198,9 @@ final class _StaticEcdsaPrivateKeyImpl implements StaticEcdsaPrivateKeyImpl {
   @override
   Future<(EcdsaPrivateKeyImpl, EcdsaPublicKeyImpl)> generateKey(
     EllipticCurve curve,
-  ) async {
-    final KeyPair<EcdsaPrivateKeyImpl, EcdsaPublicKeyImpl> keyPair =
-        await ecdsaPrivateKey_generateKey(curve);
-
-    return (keyPair.privateKey, keyPair.publicKey);
-  }
+  ) => ecdsaPrivateKey_generateKey(
+    curve,
+  ).then((keyPair) => (keyPair.privateKey, keyPair.publicKey));
 }
 
 final class _EcdsaPrivateKeyImpl implements EcdsaPrivateKeyImpl {
@@ -228,11 +225,12 @@ final class _EcdsaPrivateKeyImpl implements EcdsaPrivateKeyImpl {
   }
 
   @override
-  Future<Map<String, dynamic>> exportJsonWebKey() async =>
-      _exportJwkEcPrivateOrPublicKey(_key, isPrivateKey: true, jwkUse: 'sig');
+  Future<Map<String, dynamic>> exportJsonWebKey() => _syncResult(
+    _exportJwkEcPrivateOrPublicKey(_key, isPrivateKey: true, jwkUse: 'sig'),
+  );
 
   @override
-  Future<Uint8List> exportPkcs8Key() async => _exportPkcs8Key(_key);
+  Future<Uint8List> exportPkcs8Key() => _syncResult(_exportPkcs8Key(_key));
 }
 
 final class _StaticEcdsaPublicKeyImpl implements StaticEcdsaPublicKeyImpl {
@@ -279,7 +277,7 @@ final class _EcdsaPublicKeyImpl implements EcdsaPublicKeyImpl {
     List<int> signature,
     Stream<List<int>> data,
     HashImpl hash,
-  ) async {
+  ) {
     final md = _HashImpl.fromHash(hash)._md;
 
     // Convert to DER signature
@@ -289,16 +287,17 @@ final class _EcdsaPublicKeyImpl implements EcdsaPublicKeyImpl {
       return false;
     }
 
-    return await _verifyStream(_key, md, sig, data);
+    return _verifyStream(_key, md, sig, data);
   }
 
   @override
-  Future<Map<String, dynamic>> exportJsonWebKey() async =>
-      _exportJwkEcPrivateOrPublicKey(_key, isPrivateKey: false, jwkUse: 'sig');
+  Future<Map<String, dynamic>> exportJsonWebKey() => _syncResult(
+    _exportJwkEcPrivateOrPublicKey(_key, isPrivateKey: false, jwkUse: 'sig'),
+  );
 
   @override
-  Future<Uint8List> exportRawKey() async => _exportRawEcPublicKey(_key);
+  Future<Uint8List> exportRawKey() => _syncResult(_exportRawEcPublicKey(_key));
 
   @override
-  Future<Uint8List> exportSpkiKey() async => _exportSpkiKey(_key);
+  Future<Uint8List> exportSpkiKey() => _syncResult(_exportSpkiKey(_key));
 }

@@ -36,18 +36,18 @@ Future<HmacSecretKeyImpl> hmacSecretKey_importRawKey(
   List<int> keyData,
   HashImpl hash, {
   int? length,
-}) async {
-  return _HmacSecretKeyImpl(
+}) => _syncResult(
+  _HmacSecretKeyImpl(
     _asUint8ListZeroedToBitLength(keyData, length),
     _HashImpl.fromHash(hash),
-  );
-}
+  ),
+);
 
 Future<HmacSecretKeyImpl> hmacSecretKey_importJsonWebKey(
   Map<String, dynamic> jwk,
   HashImpl hash, {
   int? length,
-}) async {
+}) {
   final h = _HashImpl.fromHash(hash);
   final k = JsonWebKey.fromJson(jwk);
 
@@ -72,13 +72,15 @@ Future<HmacSecretKeyImpl> hmacSecretKey_importJsonWebKey(
 Future<HmacSecretKeyImpl> hmacSecretKey_generateKey(
   HashImpl hash, {
   int? length,
-}) async {
+}) {
   final h = _HashImpl.fromHash(hash);
   length ??= ssl.EVP_MD_size(h._md) * 8;
   final keyData = Uint8List((length / 8).ceil());
   fillRandomBytes(keyData);
 
-  return _HmacSecretKeyImpl(_asUint8ListZeroedToBitLength(keyData, length), h);
+  return _syncResult(
+    _HmacSecretKeyImpl(_asUint8ListZeroedToBitLength(keyData, length), h),
+  );
 }
 
 final class _StaticHmacSecretKeyImpl implements StaticHmacSecretKeyImpl {
@@ -169,17 +171,17 @@ final class _HmacSecretKeyImpl implements HmacSecretKeyImpl {
   }
 
   @override
-  Future<Map<String, dynamic>> exportJsonWebKey() async {
-    return JsonWebKey(
-      kty: 'oct',
-      use: 'sig',
-      alg: _hash.hmacJwkAlg,
-      k: _jwkEncodeBase64UrlNoPadding(_keyData),
-    ).toJson();
+  Future<Map<String, dynamic>> exportJsonWebKey() {
+    return _syncResult(
+      JsonWebKey(
+        kty: 'oct',
+        use: 'sig',
+        alg: _hash.hmacJwkAlg,
+        k: _jwkEncodeBase64UrlNoPadding(_keyData),
+      ).toJson(),
+    );
   }
 
   @override
-  Future<Uint8List> exportRawKey() async {
-    return Uint8List.fromList(_keyData);
-  }
+  Future<Uint8List> exportRawKey() => _syncResult(Uint8List.fromList(_keyData));
 }

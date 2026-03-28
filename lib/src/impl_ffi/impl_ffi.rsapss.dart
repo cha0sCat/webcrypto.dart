@@ -19,19 +19,19 @@ part of 'impl_ffi.dart';
 Future<RsaPssPrivateKeyImpl> rsaPssPrivateKey_importPkcs8Key(
   List<int> keyData,
   HashImpl hash,
-) async {
+) {
   // Validate and get hash function
   final h = _HashImpl.fromHash(hash);
-  return _RsaPssPrivateKeyImpl(_importPkcs8RsaPrivateKey(keyData), h);
+  return _syncResult(_RsaPssPrivateKeyImpl(_importPkcs8RsaPrivateKey(keyData), h));
 }
 
 Future<RsaPssPrivateKeyImpl> rsaPssPrivateKey_importJsonWebKey(
   Map<String, dynamic> jwk,
   HashImpl hash,
-) async {
+) {
   // Validate and get hash function
   final h = _HashImpl.fromHash(hash);
-  return _RsaPssPrivateKeyImpl(
+  return _syncResult(_RsaPssPrivateKeyImpl(
     _importJwkRsaPrivateOrPublicKey(
       JsonWebKey.fromJson(jwk),
       isPrivateKey: true,
@@ -39,7 +39,7 @@ Future<RsaPssPrivateKeyImpl> rsaPssPrivateKey_importJsonWebKey(
       expectedAlg: h.rsaPssJwkAlg,
     ),
     h,
-  );
+  ));
 }
 
 Future<KeyPair<RsaPssPrivateKeyImpl, RsaPssPublicKeyImpl>>
@@ -47,32 +47,32 @@ rsaPssPrivateKey_generateKey(
   int modulusLength,
   BigInt publicExponent,
   HashImpl hash,
-) async {
+) {
   // Validate and get hash function
   final h = _HashImpl.fromHash(hash);
-  final keys = await _generateRsaKeyPair(modulusLength, publicExponent);
-  return (
+  final keys = _generateRsaKeyPair(modulusLength, publicExponent);
+  return _syncResult((
     privateKey: _RsaPssPrivateKeyImpl(keys.privateKey, h),
     publicKey: _RsaPssPublicKeyImpl(keys.publicKey, h),
-  );
+  ));
 }
 
 Future<RsaPssPublicKeyImpl> rsaPssPublicKey_importSpkiKey(
   List<int> keyData,
   HashImpl hash,
-) async {
+) {
   // Validate and get hash function
   final h = _HashImpl.fromHash(hash);
-  return _RsaPssPublicKeyImpl(_importSpkiRsaPublicKey(keyData), h);
+  return _syncResult(_RsaPssPublicKeyImpl(_importSpkiRsaPublicKey(keyData), h));
 }
 
 Future<RsaPssPublicKeyImpl> rsaPssPublicKey_importJsonWebKey(
   Map<String, dynamic> jwk,
   HashImpl hash,
-) async {
+) {
   // Validate and get hash function
   final h = _HashImpl.fromHash(hash);
-  return _RsaPssPublicKeyImpl(
+  return _syncResult(_RsaPssPublicKeyImpl(
     _importJwkRsaPrivateOrPublicKey(
       JsonWebKey.fromJson(jwk),
       isPrivateKey: false,
@@ -80,7 +80,7 @@ Future<RsaPssPublicKeyImpl> rsaPssPublicKey_importJsonWebKey(
       expectedAlg: h.rsaPssJwkAlg,
     ),
     h,
-  );
+  ));
 }
 
 final class _StaticRsaPssPrivateKeyImpl implements StaticRsaPssPrivateKeyImpl {
@@ -90,29 +90,24 @@ final class _StaticRsaPssPrivateKeyImpl implements StaticRsaPssPrivateKeyImpl {
   Future<RsaPssPrivateKeyImpl> importPkcs8Key(
     List<int> keyData,
     HashImpl hash,
-  ) async {
-    return await rsaPssPrivateKey_importPkcs8Key(keyData, hash);
-  }
+  ) => rsaPssPrivateKey_importPkcs8Key(keyData, hash);
 
   @override
   Future<RsaPssPrivateKeyImpl> importJsonWebKey(
     Map<String, dynamic> jwk,
     HashImpl hash,
-  ) async {
-    return await rsaPssPrivateKey_importJsonWebKey(jwk, hash);
-  }
+  ) => rsaPssPrivateKey_importJsonWebKey(jwk, hash);
 
   @override
   Future<(RsaPssPrivateKeyImpl, RsaPssPublicKeyImpl)> generateKey(
     int modulusLength,
     BigInt publicExponent,
     HashImpl hash,
-  ) async {
-    final KeyPair<RsaPssPrivateKeyImpl, RsaPssPublicKeyImpl> keyPair =
-        await rsaPssPrivateKey_generateKey(modulusLength, publicExponent, hash);
-
-    return (keyPair.privateKey, keyPair.publicKey);
-  }
+  ) => rsaPssPrivateKey_generateKey(
+    modulusLength,
+    publicExponent,
+    hash,
+  ).then((keyPair) => (keyPair.privateKey, keyPair.publicKey));
 }
 
 final class _RsaPssPrivateKeyImpl implements RsaPssPrivateKeyImpl {
@@ -156,16 +151,17 @@ final class _RsaPssPrivateKeyImpl implements RsaPssPrivateKeyImpl {
   }
 
   @override
-  Future<Map<String, dynamic>> exportJsonWebKey() async =>
-      _exportJwkRsaPrivateOrPublicKey(
+  Future<Map<String, dynamic>> exportJsonWebKey() => _syncResult(
+    _exportJwkRsaPrivateOrPublicKey(
         _key,
         isPrivateKey: true,
         jwkUse: 'sig',
         jwkAlg: _hash.rsaPssJwkAlg,
-      );
+      ),
+  );
 
   @override
-  Future<Uint8List> exportPkcs8Key() async => _exportPkcs8Key(_key);
+  Future<Uint8List> exportPkcs8Key() => _syncResult(_exportPkcs8Key(_key));
 }
 
 final class _StaticRsaPssPublicKeyImpl implements StaticRsaPssPublicKeyImpl {
@@ -175,17 +171,13 @@ final class _StaticRsaPssPublicKeyImpl implements StaticRsaPssPublicKeyImpl {
   Future<RsaPssPublicKeyImpl> importSpkiKey(
     List<int> keyData,
     HashImpl hash,
-  ) async {
-    return await rsaPssPublicKey_importSpkiKey(keyData, hash);
-  }
+  ) => rsaPssPublicKey_importSpkiKey(keyData, hash);
 
   @override
   Future<RsaPssPublicKeyImpl> importJsonWebKey(
     Map<String, dynamic> jwk,
     HashImpl hash,
-  ) async {
-    return await rsaPssPublicKey_importJsonWebKey(jwk, hash);
-  }
+  ) => rsaPssPublicKey_importJsonWebKey(jwk, hash);
 }
 
 final class _RsaPssPublicKeyImpl implements RsaPssPublicKeyImpl {
@@ -236,14 +228,15 @@ final class _RsaPssPublicKeyImpl implements RsaPssPublicKeyImpl {
   }
 
   @override
-  Future<Map<String, dynamic>> exportJsonWebKey() async =>
-      _exportJwkRsaPrivateOrPublicKey(
+  Future<Map<String, dynamic>> exportJsonWebKey() => _syncResult(
+    _exportJwkRsaPrivateOrPublicKey(
         _key,
         isPrivateKey: false,
         jwkUse: 'sig',
         jwkAlg: _hash.rsaPssJwkAlg,
-      );
+      ),
+  );
 
   @override
-  Future<Uint8List> exportSpkiKey() async => _exportSpkiKey(_key);
+  Future<Uint8List> exportSpkiKey() => _syncResult(_exportSpkiKey(_key));
 }

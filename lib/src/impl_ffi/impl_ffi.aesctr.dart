@@ -16,16 +16,17 @@
 
 part of 'impl_ffi.dart';
 
-Future<AesCtrSecretKeyImpl> aesCtr_importRawKey(List<int> keyData) async =>
-    _AesCtrSecretKeyImpl(_aesImportRawKey(keyData));
+Future<AesCtrSecretKeyImpl> aesCtr_importRawKey(List<int> keyData) =>
+    _syncResult(_AesCtrSecretKeyImpl(_aesImportRawKey(keyData)));
 
 Future<AesCtrSecretKeyImpl> aesCtr_importJsonWebKey(
   Map<String, dynamic> jwk,
-) async =>
-    _AesCtrSecretKeyImpl(_aesImportJwkKey(jwk, expectedJwkAlgSuffix: 'CTR'));
+) => _syncResult(
+  _AesCtrSecretKeyImpl(_aesImportJwkKey(jwk, expectedJwkAlgSuffix: 'CTR')),
+);
 
-Future<AesCtrSecretKeyImpl> aesCtr_generateKey(int length) async =>
-    _AesCtrSecretKeyImpl(_aesGenerateKey(length));
+Future<AesCtrSecretKeyImpl> aesCtr_generateKey(int length) =>
+    _syncResult(_AesCtrSecretKeyImpl(_aesGenerateKey(length)));
 
 BigInt _parseBigEndian(List<int> data, [int? bitLength]) {
   bitLength ??= data.length * 8;
@@ -200,19 +201,16 @@ final class _StaticAesCtrSecretKeyImpl implements StaticAesCtrSecretKeyImpl {
   const _StaticAesCtrSecretKeyImpl();
 
   @override
-  Future<AesCtrSecretKeyImpl> importRawKey(List<int> keyData) async {
-    return await aesCtr_importRawKey(keyData);
-  }
+  Future<AesCtrSecretKeyImpl> importRawKey(List<int> keyData) =>
+      aesCtr_importRawKey(keyData);
 
   @override
-  Future<AesCtrSecretKeyImpl> importJsonWebKey(Map<String, dynamic> jwk) async {
-    return await aesCtr_importJsonWebKey(jwk);
-  }
+  Future<AesCtrSecretKeyImpl> importJsonWebKey(Map<String, dynamic> jwk) =>
+      aesCtr_importJsonWebKey(jwk);
 
   @override
-  Future<AesCtrSecretKeyImpl> generateKey(int length) async {
-    return await aesCtr_generateKey(length);
-  }
+  Future<AesCtrSecretKeyImpl> generateKey(int length) =>
+      aesCtr_generateKey(length);
 }
 
 final class _AesCtrSecretKeyImpl implements AesCtrSecretKeyImpl {
@@ -238,9 +236,9 @@ final class _AesCtrSecretKeyImpl implements AesCtrSecretKeyImpl {
     List<int> data,
     List<int> counter,
     int length,
-  ) async {
+  ) {
     _checkArguments(counter, length);
-    return await _bufferStream(
+    return _bufferStream(
       decryptStream(Stream.value(data), counter, length),
     );
   }
@@ -260,9 +258,9 @@ final class _AesCtrSecretKeyImpl implements AesCtrSecretKeyImpl {
     List<int> data,
     List<int> counter,
     int length,
-  ) async {
+  ) {
     _checkArguments(counter, length);
-    return await _bufferStream(
+    return _bufferStream(
       encryptStream(Stream.value(data), counter, length),
     );
   }
@@ -278,9 +276,9 @@ final class _AesCtrSecretKeyImpl implements AesCtrSecretKeyImpl {
   }
 
   @override
-  Future<Map<String, dynamic>> exportJsonWebKey() async =>
-      _aesExportJwkKey(_key, jwkAlgSuffix: 'CTR');
+  Future<Map<String, dynamic>> exportJsonWebKey() =>
+      _syncResult(_aesExportJwkKey(_key, jwkAlgSuffix: 'CTR'));
 
   @override
-  Future<Uint8List> exportRawKey() async => Uint8List.fromList(_key);
+  Future<Uint8List> exportRawKey() => _syncResult(Uint8List.fromList(_key));
 }
