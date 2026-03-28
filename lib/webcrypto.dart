@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/// Cryptographic primitives for use on Dart VM and Dart in the browser.
+/// Cryptographic primitives for use on native Dart and Flutter targets.
 ///
 /// TODO: Finish documentation of a public identifiers, so far the folliwng
 /// items have been documented:

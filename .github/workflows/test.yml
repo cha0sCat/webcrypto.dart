@@ -23,7 +23,7 @@ jobs:
       - run: dart format --output none --set-exit-if-changed .
       - run: dart analyze --fatal-warnings .
   linux:
-    name: Linux desktop / Chrome / Firefox
+    name: Linux desktop
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -40,21 +40,11 @@ jobs:
       - run: flutter pub get
       - run: flutter pub run webcrypto:setup
       - run: flutter test
-      - run: flutter test --platform chrome
-      - run: flutter test --platform chrome --wasm
       - run: xvfb-run flutter test integration_test/webcrypto_test.dart -d linux
         working-directory: ./example
-      - uses: nanasess/setup-chromedriver@v2
-      - name: Run integration_test with chromedriver
-        working-directory: ./example
-        run: |
-          xvfb-run ../tool/with-chromedriver.sh flutter drive \
-            --driver=test_driver/integration_test.dart \
-            --target=integration_test/webcrypto_test.dart \
-            -d chrome
-      - run: xvfb-run flutter pub run test -p vm,chrome,firefox
+      - run: xvfb-run flutter pub run test -p vm
   macos-14:
-    name: MacOS 14 desktop / Chrome / Firefox
+    name: MacOS 14 desktop
     runs-on: macos-14 # Test with xcode 15
     timeout-minutes: 15
     steps:
@@ -69,29 +59,11 @@ jobs:
       - run: flutter pub get
       - run: flutter pub run webcrypto:setup
       - run: flutter test
-      - run: flutter test --platform chrome
-      - run: flutter test --platform chrome --wasm
       - run: flutter test integration_test/webcrypto_test.dart -d macos
         working-directory: ./example
-      # TODO: Enable chromedriver testing on MacOS when it works reliably
-      #- uses: nanasess/setup-chromedriver@v2
-      #- name: Run integration_test with chromedriver
-      #  working-directory: ./example
-      #  run: |
-      #    ../tool/with-chromedriver.sh flutter drive \
-      #      --driver=test_driver/integration_test.dart \
-      #      --target=integration_test/webcrypto_test.dart \
-      #      -d chrome
-      - uses: browser-actions/setup-firefox@v1
-      - name: flutter pub run test -p vm,chrome,firefox
-        shell: bash
-        # Remove FIREFOX_EXECUTABLE override when flutter upgrades past package:test 1.25.8
-        # Issue is fixed in https://github.com/dart-lang/test/pull/2276
-        run: |
-          export FIREFOX_EXECUTABLE="$(which firefox)"
-          flutter pub run test -p vm,chrome,firefox
+      - run: flutter pub run test -p vm
   macos-15:
-    name: MacOS 15 desktop / Chrome / Firefox
+    name: MacOS 15 desktop
     runs-on: macos-15 # Test with xcode 16
     timeout-minutes: 15
     steps:
@@ -106,21 +78,11 @@ jobs:
       - run: flutter pub get
       - run: flutter pub run webcrypto:setup
       - run: flutter test
-      - run: flutter test --platform chrome
-      - run: flutter test --platform chrome --wasm
       - run: flutter test integration_test/webcrypto_test.dart -d macos
         working-directory: ./example
-      # TODO: Enable chromedriver testing on MacOS when it works reliably
-      - uses: browser-actions/setup-firefox@v1
-      - name: flutter pub run test -p vm,chrome,firefox
-        shell: bash
-        # Remove FIREFOX_EXECUTABLE override when flutter upgrades past package:test 1.25.8
-        # Issue is fixed in https://github.com/dart-lang/test/pull/2276
-        run: |
-          export FIREFOX_EXECUTABLE="$(which firefox)"
-          flutter pub run test -p vm,chrome,firefox
+      - run: flutter pub run test -p vm
   windows:
-    name: Windows desktop / Chrome / Firefox
+    name: Windows desktop
     runs-on: windows-latest
     timeout-minutes: 15
     steps:
@@ -136,20 +98,9 @@ jobs:
       - run: flutter pub get
       - run: flutter pub run webcrypto:setup
       - run: flutter test
-      #- run: flutter test --platform chrome
-      #- run: flutter test --platform chrome --wasm
       - run: flutter test integration_test/webcrypto_test.dart -d windows
         working-directory: ./example
-      - uses: nanasess/setup-chromedriver@v2
-      - name: Run integration_test with chromedriver
-        working-directory: ./example
-        shell: bash
-        run: |
-          ../tool/with-chromedriver.sh flutter drive \
-            --driver=test_driver/integration_test.dart \
-            --target=integration_test/webcrypto_test.dart \
-            -d chrome
-      - run: flutter pub run test -p vm,chrome,firefox
+      - run: flutter pub run test -p vm
   ios:
     name: iOS emulator (iPhone)
     runs-on: macos-14
@@ -203,7 +154,7 @@ jobs:
           working-directory: ./example
           script: flutter test integration_test/webcrypto_test.dart -d emulator
   linux-coverage:
-    name: Linux desktop / Chrome / Firefox (coverage)
+    name: Linux desktop (coverage)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -219,7 +170,7 @@ jobs:
           flutter config --no-analytics
       - run: flutter pub get
       - run: flutter pub run webcrypto:setup
-      - run: xvfb-run flutter pub run test -p vm,chrome,firefox -c dart2js,dart2wasm --coverage ./coverage
+      - run: xvfb-run flutter pub run test -p vm --coverage ./coverage
       # Report collected coverage
       - name: Convert coverage to lcov
         run: dart run coverage:format_coverage -i ./coverage -o ./coverage/lcov.info --lcov --report-on lib/
@@ -228,7 +179,7 @@ jobs:
           flag-name: linux
           parallel: true
   windows-coverage:
-    name: Windows desktop / Chrome / Firefox (coverage)
+    name: Windows desktop (coverage)
     runs-on: windows-latest
     timeout-minutes: 15
     steps:
@@ -243,7 +194,7 @@ jobs:
           flutter config --no-analytics
       - run: flutter pub get
       - run: flutter pub run webcrypto:setup
-      - run: flutter pub run test -p vm,chrome,firefox --coverage ./coverage
+      - run: flutter pub run test -p vm --coverage ./coverage
       # Report collected coverage
       - name: Convert coverage to lcov
         run: dart run coverage:format_coverage -i ./coverage -o ./coverage/lcov.info --lcov --report-on lib/

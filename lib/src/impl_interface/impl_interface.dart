@@ -75,8 +75,7 @@ OperationError operationError(String message) => OperationError._(message);
 /// ```
 ///
 /// The only platform implementations are:
-///  * `lib/src/impl_ffi/impl_ffi.dart`,
-///  * `lib/src/impl_js/impl_js.dart`, and,
+///  * `lib/src/impl_ffi/impl_ffi.dart`, and,
 ///  * `lib/src/impl_stub/impl_stub.dart`.
 ///
 /// These interfaces are not public and should not be implemented

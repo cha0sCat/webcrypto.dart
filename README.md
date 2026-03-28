@@ -6,13 +6,11 @@ This package provides a cross-platform implementation of the
 **Disclaimer:** This is not an officially supported Google product.
 
 This packages provides an implementation of the
-[Web Cryptograph API][webcrypto-spec] across multiple platforms. Outside the
-browser, this package features a native implementation embedding
-[BoringSSL][boringssl-src] using [`dart:ffi`][dart-ffi]. When used inside a
-web browser this package wraps the [`window.crypto`][window-crypto] APIs and
-providing the same Dart API as the native implementation.
+[Web Cryptograph API][webcrypto-spec] for native Dart and Flutter platforms.
+The package features a native implementation embedding
+[BoringSSL][boringssl-src] using [`dart:ffi`][dart-ffi].
 
-This way, `package:webcrypto` provides the same crypto API on **Android**, **iOS**, **Web**, **Windows**, **Linux** and **Mac**.
+This way, `package:webcrypto` provides the same crypto API on **Android**, **iOS**, **Windows**, **Linux** and **Mac**.
 
 **Example**
 ```dart
@@ -39,12 +37,12 @@ Future<void> main() async {
  * ECDH (deriveBits)
  * HKDF (deriveBits)
  * PBKDF2	(deriveBits)
- * BoringSSL, Chrome and Firefox implementations pass the same test cases.
+ * The native BoringSSL implementation is exercised by the shared async test suite.
 
 **Missing:**
  * Exceptions and errors thrown for invalid input is not tested yet.
- * The native implementation executes on the main-thread, however, all expensive
-   APIs are asynchronous, so they can be offloaded in the future.
+ * The public API remains asynchronous for compatibility with the existing test
+   suite, while the native backend now executes directly without JS support.
 
 For a discussion of the API design of this package,
 see `doc/design-rationale-md`.
@@ -72,9 +70,6 @@ This requires:
 The native library will be stored in `.dart_tool/webcrypto/` which should
 _not_ be under source control.
 
-It is also possible to run tests with Flutter Web using
-`flutter test -p chrome`, this does not require any additional setup steps.
-
 ## Limitations
 This package has a few limitations compared to the
 [Web Cryptograph API][webcrypto-spec]. For a discussion of parity with
@@ -87,23 +82,12 @@ Web Cryptography APIs see `doc/webcrypto-parity.md`.
  * `AES-KW` is not supported because it does not support `encrypt`/`decrypt`.
 
 ## Compatibility notes
-This package has many tests cases to asses compatibility across the native
-implementation using BoringSSL and various browser implementations of the
-Web Cryptography APIs.
-
-At the moment **compatibility testing is limited** to native implementation,
-Chrome, Firefox and Safari.
+This package has many test cases to assess compatibility across the native
+implementation using BoringSSL.
 
 **Known Issues:**
  * Chrome and BoringSSL does not support valid ECDH spki-formatted keys exported
    by Firefox prior to version 72.
- * Firefox does not support PKCS8 import/export for ECDSA and ECDH keys.
- * Firefox does not handle counter wrap around for `AES-CTR`.
- * Safari does not support P-521 for ECDSA and ECDH.
- * The browser implementation of streaming methods for _encryption_,
-   _decryption_, _signing_ and _verification_ buffers the entire input, because
-   `window.crypto` does not expose a streaming API. However, the native
-   implementation using BoringSSL does support streaming.
 
 ## References
 
@@ -114,7 +98,6 @@ Chrome, Firefox and Safari.
  * [BoringSSL Documentation][boringssl-docs].
 
 
-[window-crypto]: webcrypto-mdn
 [webcrypto-spec]: https://www.w3.org/TR/WebCryptoAPI/
 [boringssl-src]: https://boringssl.googlesource.com/boringssl/
 [boringssl-docs]: https://commondatastorage.googleapis.com/chromium-boringssl-docs/headers.html

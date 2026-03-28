@@ -12,24 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'detected_runtime_stub.dart'
-    if (dart.library.js_interop) 'detected_runtime_js_interop.dart';
+export 'detected_runtime_stub.dart' show detectedRuntime;
 
-export 'detected_runtime_stub.dart'
-    if (dart.library.js_interop) 'detected_runtime_js_interop.dart'
-    show detectedRuntime;
-
-/// Return `null` instead of [value] on Firefox.
+/// Legacy helper for browser-specific exclusions.
 ///
-/// PKCS8 is not support for ECDH / ECDSA on firefox:
-/// https://bugzilla.mozilla.org/show_bug.cgi?id=1133698
-///
-/// This utility helps filter away test cases and features known to not work on
-/// Firefox and which has been documented in the API documentation.
+/// In the native-only test matrix this returns [value] unchanged.
 T? nullOnFirefox<T>(T value) => detectedRuntime == 'firefox' ? null : value;
 
-/// Return `null` instead of [value] on Safari.
+/// Legacy helper for browser-specific exclusions.
 ///
-/// This utility helps filter away test cases and features known to not work on
-/// Safari and which has been documented in the API documentation.
+/// In the native-only test matrix this returns [value] unchanged.
 T? nullOnSafari<T>(T value) => detectedRuntime == 'safari' ? null : value;

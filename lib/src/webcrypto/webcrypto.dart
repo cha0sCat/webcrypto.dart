@@ -12,12 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/// TODO: Document that methods accepting / returning streams are NOT streaming
-///       when running in the browser. This is because the Web Cryptography API
-///       supported by browser do not support streaming. Hence, one should
-///       expect that the contents of these streams is buffered when operating
-///       in the browser.
-///       This could be documented for each method or at library level.
+/// Cryptographic primitives backed by the native implementation.
 library webcrypto;
 
 import 'dart:convert';
@@ -26,7 +21,6 @@ import 'dart:typed_data';
 import '../impl_interface/impl_interface.dart';
 import '../impl_stub/impl_stub.dart'
     if (dart.library.ffi) '../impl_ffi/impl_ffi.dart'
-    if (dart.library.js_interop) '../impl_js/impl_js.dart'
     show webCryptImpl;
 
 export '../impl_interface/impl_interface.dart'
