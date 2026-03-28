@@ -14,7 +14,7 @@
 
 /// Cryptographic primitives for use on native Dart and Flutter targets.
 ///
-/// TODO: Finish documentation of a public identifiers, so far the folliwng
+/// TODO: Finish documentation of a public identifiers, so far the following
 /// items have been documented:
 ///  * [fillRandomBytes]
 ///  * [Hash]

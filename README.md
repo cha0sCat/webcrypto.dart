@@ -1,12 +1,12 @@
 Cross-Platform Web Cryptography Implementation
 =============================================
 This package provides a cross-platform implementation of the
-[Web Cryptograph API][webcrypto-spec].
+[Web Cryptography API][webcrypto-spec].
 
 **Disclaimer:** This is not an officially supported Google product.
 
 This packages provides an implementation of the
-[Web Cryptograph API][webcrypto-spec] for native Dart and Flutter platforms.
+[Web Cryptography API][webcrypto-spec] for native Dart and Flutter platforms.
 The package features a native implementation embedding
 [BoringSSL][boringssl-src] using [`dart:ffi`][dart-ffi].
 
@@ -72,7 +72,7 @@ _not_ be under source control.
 
 ## Limitations
 This package has a few limitations compared to the
-[Web Cryptograph API][webcrypto-spec]. For a discussion of parity with
+[Web Cryptography API][webcrypto-spec]. For a discussion of parity with
 Web Cryptography APIs see `doc/webcrypto-parity.md`.
 
  * `deriveKey` is not supported, however, keys can always be created from
