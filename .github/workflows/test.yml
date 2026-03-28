@@ -8,6 +8,9 @@ on:
 env:
   PUB_ENVIRONMENT: bot.github
 
+permissions:
+  contents: read
+
 jobs:
   lints:
     name: Format + Lints
